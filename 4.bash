@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+# Tower of Hanoi (ручное управление)
+# Соответствует нефункциональным и функциональным требованиям
+
+# -----------------------------
+# Обработка Ctrl+C
+trap 'echo -e "\nЧтобы выйти, введите q или Q\n"; continue' SIGINT
+
+# -----------------------------
+# Инициализация стеков
+A=(8 7 6 5 4 3 2 1)
+B=()
+C=()
+
+move_count=1
+
+# -----------------------------
+# Функция для отображения состояния башен
+print_stacks() {
+  clear
+  echo
+  max_height=8
+  for ((i=max_height-1; i>=0; i--)); do
+    printf "|%-2s|  |%-2s|  |%-2s|\n" \
+      "${A[i]:- }" "${B[i]:- }" "${C[i]:- }"
+  done
+  echo "+--+  +--+  +--+"
+  echo " A     B     C "
+  echo
+}
+
+# -----------------------------
+# Проверка победы
+check_victory() {
+  local stack=("$@")
+  local correct=(8 7 6 5 4 3 2 1)
+  [[ "${stack[*]}" == "${correct[*]}" ]]
+}
+
+# -----------------------------
+# Основной игровой цикл
+while true; do
+  print_stacks
+  echo -n "Ход № ${move_count} (откуда, куда): "
+  read -r input
+
+  # Завершение по q/Q
+  [[ "${input,,}" == "q" ]] && echo "Выход из игры." && exit 1
+
+  # Проверка корректности ввода
+  if [[ ! "${input,,}" =~ ^[abc][[:space:]]*[abc]$ ]]; then
+    echo "Ошибка: нужно ввести два имени стеков (например: ab, a c, BC)"
+    sleep 1
+    continue
+  fi
+
+  from=${input:0:1}
+  to=${input: -1}
+
+  # Нельзя двигать из и в один и тот же стек
+  if [[ "$from" == "$to" ]]; then
+    echo "Ошибка: начальный и конечный стеки совпадают."
+    sleep 1
+    continue
+  fi
+
+  # Ссылки на массивы
+  from_stack_name=${from^^}
+  to_stack_name=${to^^}
+
+  # Проверка, что исходный стек не пуст
+  eval "len_from=\${#${from_stack_name}[@]}"
+  if (( len_from == 0 )); then
+    echo "Ошибка: стек ${from_stack_name} пуст!"
+    sleep 1
+    continue
+  fi
+
+  # Получаем вершину исходного и целевого стеков
+  eval "disk_from=\${${from_stack_name}[-1]}"
+  eval "len_to=\${#${to_stack_name}[@]}"
+  if (( len_to > 0 )); then
+    eval "disk_to=\${${to_stack_name}[-1]}"
+  else
+    disk_to=0
+  fi
+
+  # Проверяем ограничение — нельзя класть больший диск на меньший
+  if (( disk_to != 0 && disk_from > disk_to )); then
+    echo "Такое перемещение запрещено!"
+    sleep 1
+    continue
+  fi
+
+  # Перемещаем диск
+  eval "unset ${from_stack_name}[-1]"
+  eval "${to_stack_name}+=(\$disk_from)"
+  ((move_count++))
+
+  # Проверка победы
+  if check_victory "${B[@]}" || check_victory "${C[@]}"; then
+    print_stacks
+    echo "Поздравляем! Вы собрали башню за $((move_count-1)) ходов!"
+    exit 0
+  fi
+done
