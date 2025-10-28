@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# =====================================
-# Игра "Пятнашки" (15 Puzzle)
-# =====================================
-
-# Инициализация
 SIZE=4
 MOVE_COUNT=0
 
-# Генерация случайного поля
 generate_field() {
   local numbers=($(shuf -i 1-15))
   for ((i=0; i<15; i++)); do
@@ -17,7 +11,6 @@ generate_field() {
   field[15]=" "
 }
 
-# Отрисовка игрового поля
 print_field() {
   echo "+-------------------+"
   for ((i=0; i<$SIZE; i++)); do
@@ -35,7 +28,6 @@ print_field() {
   echo "+-------------------+"
 }
 
-# Проверка, собрано ли поле
 is_solved() {
   for ((i=0; i<15; i++)); do
     if [ "${field[$i]}" != "$((i+1))" ]; then
@@ -45,7 +37,6 @@ is_solved() {
   return 0
 }
 
-# Поиск индекса пустой ячейки
 find_empty() {
   for ((i=0; i<16; i++)); do
     if [ "${field[$i]}" == " " ]; then
@@ -55,7 +46,6 @@ find_empty() {
   done
 }
 
-# Получить список допустимых ходов
 valid_moves() {
   local empty=$(find_empty)
   local moves=()
@@ -70,7 +60,6 @@ valid_moves() {
   echo "${moves[@]}"
 }
 
-# Перемещение костяшки
 move_tile() {
   local tile=$1
   local empty=$(find_empty)
@@ -92,9 +81,6 @@ move_tile() {
   fi
 }
 
-# =============================
-# Основной цикл игры
-# =============================
 
 generate_field
 
@@ -105,19 +91,16 @@ while true; do
   echo -n "Ваш ход (q - выход): "
   read input
 
-  # Проверка выхода
   if [[ "$input" =~ ^[Qq]$ ]]; then
     echo "Вы вышли из игры."
     exit 0
   fi
 
-  # Проверка корректности ввода
   if [[ ! "$input" =~ ^[0-9]+$ ]]; then
     echo "Ошибка: нужно ввести номер костяшки (1–15) или q для выхода."
     continue
   fi
 
-  # Проверка, можно ли двигать эту костяшку
   if move_tile "$input"; then
     ((MOVE_COUNT++))
   else
@@ -128,7 +111,6 @@ while true; do
     continue
   fi
 
-  # Проверка на победу
   if is_solved; then
     echo "Вы собрали головоломку за $MOVE_COUNT ходов."
     print_field
